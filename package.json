@@ -8,7 +8,6 @@
     "build": "pkg src/index.js --compress GZip --targets node18-linux-x64 --out-path dist"
   },
   "dependencies": {
-    "bytenode": "^1.5.3",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "http-proxy-middleware": "^2.0.6"
