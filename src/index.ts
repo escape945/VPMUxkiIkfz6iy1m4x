@@ -486,9 +486,9 @@ async function start(noListenPort = false) {
     const start_return = await startArgo();
     if (start_return[0]) {
       pid_argo = start_return[1];
-      console.log('[Initialization]', 'Argo Start Success');
+      console.log('[Main]', 'Argo Start Success');
     } else {
-      console.log('[Initialization]', 'Argo Start Failed:', start_return[1]);
+      console.log('[Main]', 'Argo Start Failed:', start_return[1]);
     }
   }
 
@@ -505,9 +505,9 @@ async function start(noListenPort = false) {
   const start_return = await startCore();
   if (start_return[0]) {
     pid_core = start_return[1];
-    console.log('[Initialization]', 'Core Start Success');
+    console.log('[Main]', 'Core Start Success');
   } else {
-    console.log('[Initialization]', 'Core Start Failed:', start_return[1]);
+    console.log('[Main]', 'Core Start Failed:', start_return[1]);
   }
 
   if (!noListenPort) listenPort();
