@@ -1,0 +1,10 @@
+node_modules
+.pnp*
+.yarn*
+cloudflared.exe
+core.exe
+/ignore
+# dist
+
+/.env*
+yarn.lock

@@ -1,0 +1,23 @@
+{
+  "uuid": "",
+  "path": "/",
+  "warp": {
+    "key": "7F8PJR2TGG84c+BNDEIA+urYR2HDZi3b06spTe1hBoY=",
+    "ipv6": "2606:4700:110:8530:f4b7:7be1:f218:39ef",
+    "endpoint": "162.159.195.84:2408",
+    "reserved": "PUXB",
+    "add4": true,
+    "add6": true,
+    "routing": ""
+  },
+  "argo": {
+    "use": false,
+    "protocol": "http2",
+    "token": ""
+  },
+  "tls": {
+    "use": false,
+    "key": "",
+    "cert": ""
+  }
+}
