@@ -495,7 +495,7 @@ async function start(noListenPort = false) {
   if (!fs.existsSync(path.resolve(process.cwd(), config.core_path))) {
     const foo = await downloadCore(config.core_path);
     if (foo) {
-      console.log('[Initialization]', 'Core Download Success');
+      console.log('[Initialization]', 'Core Download Success', `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`);
     } else {
       console.log('[Initialization]', 'Core Download Failed');
     }
