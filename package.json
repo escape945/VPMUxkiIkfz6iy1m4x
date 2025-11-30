@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn src/index.ts",
-    "start": "node src/index.ts",
+    "start": "yarn build && node dist/index.js",
     "build": "cd src && swc . -d ../dist"
   },
   "dependencies": {
