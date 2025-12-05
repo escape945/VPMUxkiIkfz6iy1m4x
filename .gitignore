@@ -4,7 +4,7 @@ node_modules
 cloudflared.exe
 core.exe
 /ignore
-# dist
+dist
 
 /.env*
 yarn.lock
