@@ -366,7 +366,7 @@ async function startCore() {
   let processC = cp.spawn(path.resolve(process.cwd(), config.core_path), ['-c', 'stdin:']);
   processC.on('exit', (code, signal) => {
     console.log('[Main]', `Core exited with code ${code}, signal ${signal}`);
-    if (config.disable_exit_protect) process.exit(1);
+    if (!config.disable_exit_protect) process.exit(1);
   });
 
   let stdInStream = new stream.Readable();
@@ -421,7 +421,7 @@ async function startArgo() {
   let processC = cp.spawn(path.resolve(process.cwd(), config.argo_path), ['tunnel', '--no-autoupdate', ...args]);
   processC.on('exit', (code, signal) => {
     console.log('[Main]', `Argo exited with code ${code}, signal ${signal}`);
-    if (config.disable_exit_protect) process.exit(1);
+    if (!config.disable_exit_protect) process.exit(1);
   });
 
   return new Promise(resolve => {
@@ -507,10 +507,11 @@ async function start(noListenPort = false) {
       console.log('[Main]', 'Argo Start Success');
     } else {
       console.log('[Main]', 'Argo Start Failed:', start_return[1]);
+      if (!config.disable_exit_protect) process.exit(1);
     }
   }
 
-  if (!fs.existsSync(path.resolve(process.cwd(), config.core_path))) {
+  if (!fs.existsSync(path.resolve(process.cwd(), config.core_path)) && false) {
     const foo = await downloadCore(config.core_path);
     if (foo) {
       console.log(
@@ -530,6 +531,7 @@ async function start(noListenPort = false) {
     console.log('[Main]', 'Core Start Success');
   } else {
     console.log('[Main]', 'Core Start Failed:', start_return[1]);
+    if (!config.disable_exit_protect) process.exit(1);
   }
 
   if (!noListenPort) listenPort();
