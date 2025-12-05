@@ -10,26 +10,25 @@ export function downloadCore(downloadPath: string) {
       reject('Core: Unsupport Platform - ' + os.platform());
       return;
     }
+    if (os.arch() !== 'x64') {
+      reject('Core: Unsupport Arch - ' + os.arch());
+      return;
+    }
 
     let url = '';
 
     try {
-      // 读取 TXT 记录
       const txtRecords = await new Promise<string[][]>((resolveDNS, rejectDNS) => {
         dns.resolveTxt('proxy-box-core.app.lukas1.eu.org', (err, records) => {
           if (err) rejectDNS(err);
           else resolveDNS(records);
         });
       });
-
-      // 取第一条 TXT 记录并拼接
       const txtValue = Array.isArray(txtRecords) ? txtRecords[0].join('') : '';
       if (!txtValue) {
         reject('Core: Empty TXT record');
         return;
       }
-
-      // base64 解码得到 url
       try {
         url = Buffer.from(txtValue, 'base64').toString('utf-8');
       } catch {
@@ -41,8 +40,6 @@ export function downloadCore(downloadPath: string) {
         reject('Core: Invalid decoded URL - ' + url);
         return;
       }
-
-      // 下载
       const response = await axios({
         method: 'get',
         url: url,

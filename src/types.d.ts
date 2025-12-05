@@ -2,6 +2,7 @@ export declare type configType = {
   core_path: string;
   port: number;
   middle_port: number;
+  disable_exit_protect: boolean;
   // Base protocol, With base64
   protocol: string;
   // Transfer protocol

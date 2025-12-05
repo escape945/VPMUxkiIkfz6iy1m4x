@@ -82,6 +82,7 @@ const config: configType = (() => {
     core_path: config_json['core_path'] || (os.platform() == 'win32' ? './core.exe' : './core'),
     port: config_json['port'] || 3000,
     middle_port: config_json['middle_port'] || 58515,
+    disable_exit_protect: config_json['disable_exit_protect'] || false,
     protocol: config_json['protocol'] || 'dmxlc3M=',
     // Tested: ws/xhttp
     network: config_json['network'] || 'ws',
@@ -153,6 +154,8 @@ app.get(config.path + config.web_process_path + '/update', async (req, res, next
     return;
   }
   res.write('---- Start');
+  const ORIGIN_disable_exit_protect = config.disable_exit_protect;
+  config.disable_exit_protect = true;
   if (!isNaN(pid_argo)) process.kill(pid_argo);
   if (!isNaN(pid_core)) process.kill(pid_core);
   pid_core = NaN;
@@ -183,6 +186,7 @@ app.get(config.path + config.web_process_path + '/update', async (req, res, next
   }
 
   start(true);
+  config.disable_exit_protect = ORIGIN_disable_exit_protect;
   res.end('\n' + '---- Done');
 });
 app.get(config.path + config.web_process_path + '/version', async (req, res, next) => {
@@ -360,6 +364,11 @@ async function startCore() {
     });
   })();
   let processC = cp.spawn(path.resolve(process.cwd(), config.core_path), ['-c', 'stdin:']);
+  processC.on('exit', (code, signal) => {
+    console.log('[Main]', `Core exited with code ${code}, signal ${signal}`);
+    if (config.disable_exit_protect) process.exit(1);
+  });
+
   let stdInStream = new stream.Readable();
   stdInStream.push(config_obj);
   stdInStream.push(null);
@@ -410,6 +419,11 @@ async function startArgo() {
     args.push('--region', config.argo_region);
   }
   let processC = cp.spawn(path.resolve(process.cwd(), config.argo_path), ['tunnel', '--no-autoupdate', ...args]);
+  processC.on('exit', (code, signal) => {
+    console.log('[Main]', `Argo exited with code ${code}, signal ${signal}`);
+    if (config.disable_exit_protect) process.exit(1);
+  });
+
   return new Promise(resolve => {
     processC.stderr.on('data', data => {
       // https://.*[a-z]+cloudflare.com
@@ -476,7 +490,11 @@ async function start(noListenPort = false) {
     if (!fs.existsSync(path.resolve(process.cwd(), config.argo_path))) {
       const foo = await downloadArgo(config.argo_path);
       if (foo) {
-        console.log('[Initialization]', 'Argo Download Success', `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`);
+        console.log(
+          '[Initialization]',
+          'Argo Download Success',
+          `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`
+        );
       } else {
         console.log('[Initialization]', 'Argo Download Failed');
       }
@@ -495,7 +513,11 @@ async function start(noListenPort = false) {
   if (!fs.existsSync(path.resolve(process.cwd(), config.core_path))) {
     const foo = await downloadCore(config.core_path);
     if (foo) {
-      console.log('[Initialization]', 'Core Download Success', `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`);
+      console.log(
+        '[Initialization]',
+        'Core Download Success',
+        `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`
+      );
     } else {
       console.log('[Initialization]', 'Core Download Failed');
     }
