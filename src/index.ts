@@ -511,7 +511,7 @@ async function start(noListenPort = false) {
     }
   }
 
-  if (!fs.existsSync(path.resolve(process.cwd(), config.core_path)) && false) {
+  if (!fs.existsSync(path.resolve(process.cwd(), config.core_path))) {
     const foo = await downloadCore(config.core_path);
     if (foo) {
       console.log(
