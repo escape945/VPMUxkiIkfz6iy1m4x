@@ -255,7 +255,7 @@ app.use(
         console.log(msg);
       },
     },
-  })
+  }),
 );
 
 app.use((req, res, next) => {
@@ -359,7 +359,9 @@ async function startCore() {
       let processC = cp.spawn('chmod', args);
       processC.on('close', () => {
         console.log('[Initialization]', 'Core chmod Compeleted');
-        setTimeout(_ => resolve(0), 100);
+        setTimeout(() => {
+          resolve(0);
+        }, 100);
       });
     });
   })();
@@ -402,7 +404,9 @@ async function startArgo() {
       let processC = cp.spawn('chmod', args);
       processC.on('close', () => {
         console.log('[Initialization]', 'Argo chmod Compeleted');
-        setTimeout(_ => resolve(0), 100);
+        setTimeout(() => {
+          resolve(0);
+        }, 100);
       });
     });
   })();
@@ -433,7 +437,7 @@ async function startArgo() {
           data
             .toString()
             .match(/(?<=Registered tunnel connection).*/)[0]
-            .trim()
+            .trim(),
         );
       } else if (!config.argo_access_token && /https:\/\/.*[a-z]+cloudflare.com/.test(data)) {
         console.log('[Argo Config]', `Domain: ${data.toString().match(/(?<=https:\/\/).*[a-z]+cloudflare.com/)[0]}`);
@@ -493,7 +497,7 @@ async function start(noListenPort = false) {
         console.log(
           '[Initialization]',
           'Argo Download Success',
-          `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`
+          `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`,
         );
       } else {
         console.log('[Initialization]', 'Argo Download Failed');
@@ -517,7 +521,7 @@ async function start(noListenPort = false) {
       console.log(
         '[Initialization]',
         'Core Download Success',
-        `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`
+        `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`,
       );
     } else {
       console.log('[Initialization]', 'Core Download Failed');
