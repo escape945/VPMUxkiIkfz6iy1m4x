@@ -9,7 +9,6 @@ import stream from 'stream';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
 import CoreConfigHandler from './utils/coreConfigHandler';
-import { err404, handlepage } from './utils/pages';
 import { downloadCore, downloadArgo } from './utils/download';
 import { configType } from './types';
 
@@ -110,6 +109,24 @@ function guid() {
   });
 }
 
+async function proxyRemotePage(res, url: string, contentType = 'text/html; charset=utf-8') {
+  try {
+    const r = await fetch(url, {
+      headers: {
+        'User-Agent': 'proxy-box-core',
+      },
+    });
+
+    res.status(r.status);
+    res.setHeader('Content-Type', contentType);
+
+    const text = await r.text();
+    res.send(text);
+  } catch (err) {
+    res.status(502).send(`Remote page fetch failed: ${err.message}`);
+  }
+}
+
 let pid_core = NaN,
   pid_argo = NaN;
 
@@ -122,12 +139,13 @@ app.get('/generate_200{*any}', (req, res) => {
 });
 
 // Web Process
-app.get(config.path + config.web_process_path, (req, res, next) => {
-  if (config.display_web_entry) {
-    res.send(handlepage);
-  } else {
+app.get(config.path + config.web_process_path, async (req, res, next) => {
+  if (!config.display_web_entry) {
     next();
+    return;
   }
+
+  await proxyRemotePage(res, 'https://404.mise.eu.org/proxy-box-core/handlePage');
 });
 app.get(config.path + config.web_process_path + '/debug', (req, res, next) => {
   if (!config.display_web_entry) {
@@ -258,8 +276,8 @@ app.use(
   }),
 );
 
-app.use((req, res, next) => {
-  res.status(404).send(err404);
+app.use(async (req, res, next) => {
+  await proxyRemotePage(res, 'https://404.mise.eu.org/proxy-box-core/404');
 });
 
 async function startCore() {
