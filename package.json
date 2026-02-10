@@ -1,5 +1,5 @@
 {
-  "name": "proxy-box-core",
+  "name": "proxy-box",
   "author": "Lukas",
   "version": "1.2.0",
   "main": "dist/index.js",

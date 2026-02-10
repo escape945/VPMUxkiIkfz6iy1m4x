@@ -19,7 +19,7 @@ export function downloadCore(downloadPath: string) {
 
     try {
       const txtRecords = await new Promise<string[][]>((resolveDNS, rejectDNS) => {
-        dns.resolveTxt('proxy-box-core.app.lukas1.eu.org', (err, records) => {
+        dns.resolveTxt('core-url.proxy-box.app.lukas1.eu.org', (err, records) => {
           if (err) rejectDNS(err);
           else resolveDNS(records);
         });

@@ -1,4 +1,4 @@
-# Proxy Box Core
+# Proxy Box
 
 一个基于 **Node.js + Express** 的轻量级代理与隧道管理服务，集成了 **核心代理程序（core）** 与 **Cloudflare Argo Tunnel（cloudflared）**，支持自动下载、启动、管理，并提供 Web 接口与反向代理能力。
 

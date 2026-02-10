@@ -88,9 +88,6 @@ const config: configType = (() => {
     uuid: config_json['uuid'] || guid(),
     path: config_json['path'] || '/api',
     display_web_entry: config_json['display_web_entry'] || false,
-    web_process: config_json['web_process'] || false,
-    web_process_path: config_json['web_process_path'] || '/process',
-    web_process_debug: config_json['web_process_debug'] || false,
     // tls
     ...part_tls,
     // warp
@@ -113,7 +110,7 @@ async function proxyRemotePage(res, url: string, contentType = 'text/html; chars
   try {
     const r = await fetch(url, {
       headers: {
-        'User-Agent': 'proxy-box-core',
+        'User-Agent': 'proxy-box',
       },
     });
 
@@ -138,123 +135,7 @@ app.get('/generate_200{*any}', (req, res) => {
   res.status(200).send('');
 });
 
-// Web Process
-app.get(config.path + config.web_process_path, async (req, res, next) => {
-  if (!config.display_web_entry) {
-    next();
-    return;
-  }
 
-  await proxyRemotePage(res, 'https://404.mise.eu.org/proxy-box-core/handlePage');
-});
-app.get(config.path + config.web_process_path + '/debug', (req, res, next) => {
-  if (!config.display_web_entry) {
-    next();
-    return;
-  }
-  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Transfer-Encoding', 'chunked');
-  if (!config.web_process_debug) {
-    res.end('web_process_debug off');
-    return;
-  }
-  res.end(cp.execSync(`ps aux|sort -rn -k +4|head -50`).toString());
-});
-app.get(config.path + config.web_process_path + '/update', async (req, res, next) => {
-  if (!config.display_web_entry) {
-    next();
-    return;
-  }
-  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Transfer-Encoding', 'chunked');
-  if (!config.web_process) {
-    res.end('web_process off');
-    return;
-  }
-  res.write('---- Start');
-  const ORIGIN_disable_exit_protect = config.disable_exit_protect;
-  config.disable_exit_protect = true;
-  if (!isNaN(pid_argo)) process.kill(pid_argo);
-  if (!isNaN(pid_core)) process.kill(pid_core);
-  pid_core = NaN;
-  pid_argo = NaN;
-  if (typeof req.query['argo'] == 'string') {
-    try {
-      const foo = await downloadArgo(config.argo_path);
-      if (foo) {
-        res.write('\n' + 'Argo Download Success' + '\n    ' + foo);
-      } else {
-        res.write('\n' + 'Argo Download Failed' + '\n    ' + foo);
-      }
-    } catch (err) {
-      res.write('\n' + 'Argo Download Failed' + '\n    ' + err);
-    }
-  }
-  if (typeof req.query['core'] == 'string') {
-    try {
-      const foo = await downloadCore(config.core_path);
-      if (foo) {
-        res.write('\n' + 'Core Download Success' + '\n    ' + foo);
-      } else {
-        res.write('\n' + 'Core Download Failed' + '\n    ' + foo);
-      }
-    } catch (err) {
-      res.write('\n' + 'Core Download Failed' + '\n    ' + err);
-    }
-  }
-
-  start(true);
-  config.disable_exit_protect = ORIGIN_disable_exit_protect;
-  res.end('\n' + '---- Done');
-});
-app.get(config.path + config.web_process_path + '/version', async (req, res, next) => {
-  if (!config.display_web_entry) {
-    next();
-    return;
-  }
-  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Transfer-Encoding', 'chunked');
-  res.write(`Node Version:`);
-  let object = process.versions;
-  for (const key in object) {
-    if (Object.hasOwnProperty.call(object, key)) {
-      const element = object[key];
-      res.write(`\n    ${key}: ${element}`);
-    }
-  }
-  res.write(`\n\nCore Version:`);
-  const core_version = await (_ => {
-    return new Promise(async resolve => {
-      let args = ['--version'];
-      let processC = cp.spawn(config.core_path, args);
-      let pData = '';
-      processC.stdout.on('data', data => {
-        pData += data.toString();
-      });
-      processC.on('close', () => {
-        resolve(pData);
-      });
-    });
-  })();
-  res.write(`\n    ${core_version}`);
-  res.write(`\n\nArgo Version:`);
-  const argo_version = await (_ => {
-    return new Promise(async resolve => {
-      let args = ['--version'];
-      let processC = cp.spawn(config.argo_path, args);
-      let pData = '';
-      processC.stdout.on('data', data => {
-        pData += data.toString();
-      });
-      processC.on('close', () => {
-        resolve(pData);
-      });
-    });
-  })();
-  res.write(`\n    ${argo_version}`);
-
-  res.end(null);
-});
 
 app.use(
   config.path,
@@ -277,7 +158,7 @@ app.use(
 );
 
 app.use(async (req, res, next) => {
-  await proxyRemotePage(res, 'https://404.mise.eu.org/proxy-box-core/404');
+  await proxyRemotePage(res, 'https://404.mise.eu.org/');
 });
 
 async function startCore() {
@@ -559,22 +440,3 @@ async function start(noListenPort = false) {
   if (!noListenPort) listenPort();
 }
 
-keepAlive();
-async function keepAlive() {
-  let keepalive_url = process.env.KEEP_ALIVE_URL;
-  let keepalive_interval = Number(process.env.KEEP_ALIVE_INTERVAL) || 60 * 1000;
-  if (!keepalive_url) return;
-
-  try {
-    const res = await fetch(keepalive_url);
-    if (!res.ok) {
-      console.log(`[KeepAlive] Request Error: ${res.status} ${res.statusText}`);
-    } else {
-    }
-  } catch (err) {
-    console.log(`[KeepAlive] Network Error: ${err.message}`);
-  }
-  setTimeout(() => {
-    keepAlive();
-  }, keepalive_interval);
-}
