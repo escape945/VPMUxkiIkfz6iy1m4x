@@ -10,7 +10,7 @@
     "add6": true,
     "routing": ""
   },
-  "argo": {
+  "cloudflared": {
     "use": false,
     "protocol": "http2",
     "token": ""

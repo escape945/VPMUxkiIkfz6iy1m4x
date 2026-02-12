@@ -9,7 +9,7 @@ import stream from 'stream';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
 import CoreConfigHandler from './utils/coreConfigHandler';
-import { downloadCore, downloadArgo } from './utils/download';
+import { downloadCore, downloadCloudflared } from './utils/download';
 import { configType } from './types';
 
 dotenv.config();
@@ -52,18 +52,18 @@ const config: configType = (() => {
       part_warp.warp_reserved = decodeClientId(config_json['warp']['reserved']);
     }
   }
-  let part_argo: any = {
-    argo_path: config_json['argo_path'] || (os.platform() == 'win32' ? './cloudflared.exe' : './cloudflared'),
+  let part_cloudflared: any = {
+    cloudflared_path: config_json['cloudflared_path'] || (os.platform() == 'win32' ? './cloudflared.exe' : './cloudflared'),
   };
-  if (config_json['argo']) {
-    part_argo = {
-      ...part_argo,
-      use_argo: config_json['argo']['use'] || false,
+  if (config_json['cloudflared']) {
+    part_cloudflared = {
+      ...part_cloudflared,
+      use_cloudflared: config_json['cloudflared']['use'] || false,
       // [auto]/quic/http2
-      argo_protocol: config_json['argo']['protocol'] || '',
+      cloudflared_protocol: config_json['cloudflared']['protocol'] || '',
       // none/us
-      argo_region: config_json['argo']['region'] || '',
-      argo_access_token: config_json['argo']['token'] || '',
+      cloudflared_region: config_json['cloudflared']['region'] || '',
+      cloudflared_access_token: config_json['cloudflared']['token'] || '',
     };
   }
   let part_tls = {};
@@ -92,8 +92,8 @@ const config: configType = (() => {
     ...part_tls,
     // warp
     ...part_warp,
-    // argo (cloudflared)
-    ...part_argo,
+    // cloudflared
+    ...part_cloudflared,
   };
 })();
 
@@ -125,7 +125,7 @@ async function proxyRemotePage(res, url: string, contentType = 'text/html; chars
 }
 
 let pid_core = NaN,
-  pid_argo = NaN;
+  pid_cloudflared = NaN;
 
 // Generate Status Codes
 app.get('/generate_204', (req, res) => {
@@ -292,17 +292,17 @@ uuid: ${config.uuid}
   });
 }
 
-async function startArgo() {
+async function startCloudflared() {
   await (_ => {
     return new Promise(async resolve => {
       if (os.platform() != 'linux') {
         resolve(0);
         return;
       }
-      let args = ['+x', path.resolve(process.cwd(), config.argo_path)];
+      let args = ['+x', path.resolve(process.cwd(), config.cloudflared_path)];
       let processC = cp.spawn('chmod', args);
       processC.on('close', () => {
-        console.log('[Initialization]', 'Argo chmod Compeleted');
+        console.log('[Initialization]', 'Cloudflared chmod Compeleted');
         setTimeout(() => {
           resolve(0);
         }, 100);
@@ -311,19 +311,19 @@ async function startArgo() {
   })();
 
   let args = ['--url', `http://localhost:${config.port}`];
-  if (config.argo_access_token) {
-    args = ['run', '--token', config.argo_access_token];
-    console.log('[Argo Config]', 'Domain: Custom Token');
+  if (config.cloudflared_access_token) {
+    args = ['run', '--token', config.cloudflared_access_token];
+    console.log('[Cloudflared Config]', 'Domain: Custom Token');
   }
-  if (config.argo_protocol) {
-    args.push('--protocol', config.argo_protocol);
+  if (config.cloudflared_protocol) {
+    args.push('--protocol', config.cloudflared_protocol);
   }
-  if (config.argo_region) {
-    args.push('--region', config.argo_region);
+  if (config.cloudflared_region) {
+    args.push('--region', config.cloudflared_region);
   }
-  let processC = cp.spawn(path.resolve(process.cwd(), config.argo_path), ['tunnel', '--no-autoupdate', ...args]);
+  let processC = cp.spawn(path.resolve(process.cwd(), config.cloudflared_path), ['tunnel', '--no-autoupdate', ...args]);
   processC.on('exit', (code, signal) => {
-    console.log('[Main]', `Argo exited with code ${code}, signal ${signal}`);
+    console.log('[Main]', `Cloudflared exited with code ${code}, signal ${signal}`);
     if (!config.disable_exit_protect) process.exit(1);
   });
 
@@ -332,21 +332,21 @@ async function startArgo() {
       // https://.*[a-z]+cloudflare.com
       if (/Registered tunnel connection/.test(data)) {
         console.log(
-          '[Argo Info]',
+          '[Cloudflared Info]',
           data
             .toString()
             .match(/(?<=Registered tunnel connection).*/)[0]
             .trim(),
         );
-      } else if (!config.argo_access_token && /https:\/\/.*[a-z]+cloudflare.com/.test(data)) {
-        console.log('[Argo Config]', `Domain: ${data.toString().match(/(?<=https:\/\/).*[a-z]+cloudflare.com/)[0]}`);
+      } else if (!config.cloudflared_access_token && /https:\/\/.*[a-z]+cloudflare.com/.test(data)) {
+        console.log('[Cloudflared Config]', `Domain: ${data.toString().match(/(?<=https:\/\/).*[a-z]+cloudflare.com/)[0]}`);
       } else {
         // console.log(data.toString().trim());
       }
       resolve([true, processC.pid]);
     });
     processC.on('error', err => {
-      console.log('[Argo Error]', err);
+      console.log('[Cloudflared Error]', err);
       resolve([false, err]);
     });
   });
@@ -389,27 +389,27 @@ function listenPort() {
 start();
 async function start(noListenPort = false) {
   console.log('[OS Info]', `${os.platform()} ${os.arch()}`);
-  if (config.use_argo) {
-    if (!fs.existsSync(path.resolve(process.cwd(), config.argo_path))) {
-      const foo = await downloadArgo(config.argo_path);
+  if (config.use_cloudflared) {
+    if (!fs.existsSync(path.resolve(process.cwd(), config.cloudflared_path))) {
+      const foo = await downloadCloudflared(config.cloudflared_path);
       if (foo) {
         console.log(
           '[Initialization]',
-          'Argo Download Success',
+          'Cloudflared Download Success',
           `${Math.round((Number(foo) / 1024 / 1024) * 10) / 10} MB`,
         );
       } else {
-        console.log('[Initialization]', 'Argo Download Failed');
+        console.log('[Initialization]', 'Cloudflared Download Failed');
       }
     } else {
-      console.log('[Initialization]', 'Argo Already Exist');
+      console.log('[Initialization]', 'Cloudflared Already Exist');
     }
-    const start_return = await startArgo();
+    const start_return = await startCloudflared();
     if (start_return[0]) {
-      pid_argo = start_return[1];
-      console.log('[Main]', 'Argo Start Success');
+      pid_cloudflared = start_return[1];
+      console.log('[Main]', 'Cloudflared Start Success');
     } else {
-      console.log('[Main]', 'Argo Start Failed:', start_return[1]);
+      console.log('[Main]', 'Cloudflared Start Failed:', start_return[1]);
       if (!config.disable_exit_protect) process.exit(1);
     }
   }

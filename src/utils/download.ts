@@ -56,7 +56,7 @@ export function downloadCore(downloadPath: string) {
   });
 }
 
-export function downloadArgo(downloadPath: string) {
+export function downloadCloudflared(downloadPath: string) {
   return new Promise(async (resolve, reject) => {
     let url = 'https://github.com/cloudflare/cloudflared/releases/latest/download/';
 

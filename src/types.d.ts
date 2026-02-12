@@ -32,10 +32,10 @@ export declare type configType = {
   add_ipv6?: boolean;
   warp_routing?: string;
 
-  // Part: Argo
-  argo_path?: string;
-  use_argo: boolean;
-  argo_protocol?: string;
-  argo_region?: string;
-  argo_access_token?: string;
+  // Part: Cloudflared
+  cloudflared_path?: string;
+  use_cloudflared: boolean;
+  cloudflared_protocol?: string;
+  cloudflared_region?: string;
+  cloudflared_access_token?: string;
 };

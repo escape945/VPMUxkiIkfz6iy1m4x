@@ -1,20 +1,17 @@
 # Proxy Box
 
-一个基于 **Node.js + Express** 的轻量级代理与隧道管理服务，集成了 **核心代理程序（core）** 与 **Cloudflare Argo Tunnel（cloudflared）**，支持自动下载、启动、管理，并提供 Web 接口与反向代理能力。
+一个基于 **Node.js + Express** 的轻量级代理与隧道管理服务，集成了 **核心代理程序（core）** 与 **Cloudflared**，支持自动下载、启动、管理，并提供 Web 接口与反向代理能力。
 
 ---
 
 ## ✨ 功能特性
 
 - 🚀 自动下载并启动 core
-- 🌐 可选启用 Cloudflare Argo Tunnel
+- 🌐 可选启用 Cloudflared
 - 🔁 Express 反向代理（支持 WebSocket）
 - 🔐 可选 HTTPS（自定义 TLS 证书）
 - 🧩 WARP WireGuard 出口支持（IPv4 / IPv6）
-- 🖥 Web Process 管理页面
-- 🔄 在线更新 core / argo
-- ❤️ KeepAlive 防止服务休眠
-- 📄 404 / 管理页面使用远端页面（热更新）
+- 📄 404 使用远端页面（热更新）
 
 ---
 
@@ -34,7 +31,7 @@
 ├─ index.ts              # 主入口
 ├─ utils/
 │  ├─ coreConfigHandler  # core 配置生成
-│  ├─ download.ts        # core / argo 下载逻辑
+│  ├─ download.ts        # core / cloudflared 下载逻辑
 ├─ types.ts              # 类型定义
 ├─ config.json           # 本地配置文件（可选）
 └─ README.md
@@ -59,7 +56,7 @@
   "network": "ws",
   "uuid": "不填时自动生成",
 
-  "argo": {
+  "cloudflared": {
     "use": true,
     "protocol": "quic",
     "region": "us",
@@ -81,53 +78,6 @@
   }
 }
 ```
-
----
-
-## 🌐 Web Process 管理接口
-
-当启用：
-
-```json
-{
-  "display_web_entry": true,
-  "web_process": true
-}
-```
-
-可访问：
-
-```text
-{path}{web_process_path}
-```
-
-默认：
-
-```text
-/api/process
-```
-
-### 可用接口
-
-| 路径                        | 说明                    |
-| --------------------------- | ----------------------- |
-| `/process`                  | 管理页面（远端加载）    |
-| `/process/debug`            | 进程调试信息            |
-| `/process/update?core&argo` | 在线更新二进制          |
-| `/process/version`          | Node / Core / Argo 版本 |
-
----
-
-## 🔁 Keep Alive
-
-### 环境变量
-
-```env
-KEEP_ALIVE_URL=https://your-domain/generate_204
-KEEP_ALIVE_INTERVAL=60000
-```
-
-服务会定期向该 URL 发起请求。
 
 ---
 
